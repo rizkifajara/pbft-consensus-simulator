@@ -5,16 +5,15 @@ This repository contains a Python implementation of the Practical Byzantine Faul
 ## Features
 
 - PBFT consensus algorithm implementation
-- Simulation of honest and Byzantine nodes
-- Network simulation with message passing
+- Simulation of honest and Faulty nodes
+- Network simulation with arbitrary message loss
 - View change mechanism
-- Byzantine node behaviors: random, silent, and liar
 
 ## Project Structure
 
 - `src/`
-  - `consensus.py`: Contains the `PBFTConsensus` class implementing the PBFT algorithm
-  - `node.py`: Defines `Node` and `ByzantineNode` classes
+  - `pbft.py`: Contains the `PBFTNode` class implementing the PBFT algorithm
+  - `node.py`: Defines `Node` and `FaultyNode` classes
   - `message.py`: Defines the `Message` class for inter-node communication
   - `network.py`: Implements the `Network` class for simulating network behavior
 - `main.py`: Entry point for running the PBFT simulation
@@ -25,21 +24,10 @@ This repository contains a Python implementation of the Practical Byzantine Faul
 
 ## Setup
 
-1. Clone the repository:
+Clone the repository:
    ```
    git clone https://github.com/yourusername/pbft-implementation.git
    cd pbft-implementation
-   ```
-
-2. (Optional) Create and activate a virtual environment:
-   ```
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-   ```
-
-3. Install dependencies (if any):
-   ```
-   pip3 install -r requirements.txt
    ```
 
 ## Usage
@@ -54,11 +42,8 @@ This will start a simulation of the PBFT consensus process with a mix of honest 
 ## Customization
 
 You can modify the following parameters in `main.py`:
-- `total_nodes`: Total number of nodes in the network
-- Number of honest and Byzantine nodes
-- Types of Byzantine nodes (random, silent, liar)
-- Initial consensus value
-- Number of simulation rounds
+- `N`: Total number of nodes in the network
+- `f`: Threshold for the faulty nodes in the network
 
 ## Understanding the Output
 

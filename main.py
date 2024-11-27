@@ -1,41 +1,52 @@
-from src.node import Node, ByzantineNode
+from src.simulator import Simulator
 from src.network import Network
-from src.consensus import PBFTConsensus
+from src.pbft import PBFTNode
+from src.node import FaultyNode
 import time
 
+
 def main():
-    total_nodes = 7
-    honest_nodes = [Node(i, total_nodes) for i in range(4)]
-    byzantine_nodes = [
-        ByzantineNode(4, total_nodes, 'random'),
-        ByzantineNode(5, total_nodes, 'silent'),
-        ByzantineNode(6, total_nodes, 'liar')
-    ]
-    nodes = honest_nodes + byzantine_nodes
-    network = Network(nodes)
+    # N is the total number of nodes
+    N = 21
+    # f is the total number of faulty nodes
+    f = 6
+    # This threshold injects some entropy into our network and drops some messages from being delivered.
+    # We don't have any anti-entropy mechanism to replay lost messages.
+    # A high threshold might cause consensus to halt.
+    # Set it to -1 to disable this feature.
+    delivery_threshold = 0.05
+    # Make it True to enable logs.
+    disable_logs = True
 
-    for node in nodes:
-        node.set_network(network)
-        node.consensus = PBFTConsensus(node)
+    #################
 
-    honest_nodes[0].consensus.start_consensus("Hello, World!")
-   
-    for round in range(50):
-        print(f"\nRound {round + 1}")
-        for node in nodes:
-            node.process_messages()
-            node.consensus.check_consensus_status()
-            print(f"Node {node.id} ({type(node).__name__}) - Phase: {node.consensus.phase}, Value: {node.consensus.current_value}")
-        
-        if all(node.consensus.phase == "DECIDED" for node in honest_nodes):
-            print("\nConsensus reached!")
-            break
-        
-        time.sleep(0.1)
-    
-    print("\nFinal states:")
-    for node in nodes:
-        print(f"Node {node.id} ({type(node).__name__}) - Final state: {node.consensus.phase}, Value: {node.consensus.current_value}")
+    print("===========")
+    print(f"Scenario A: {N} non faulty nodes with {delivery_threshold*100}% message loss...")
+    nodes = [PBFTNode(i, N, f, disable_logs) for i in range(N)]
+    simulator = Simulator("PBFT", nodes, f, delivery_threshold)
+    simulator.start()
+
+    #################
+
+    print("===========")
+    print(f"Scenario B: {N} nodes are faulty...")
+    nodes = [PBFTNode(i, N, f, disable_logs) for i in range(N)]
+    nodes[7] = FaultyNode()
+    nodes[8] = FaultyNode()
+    nodes[9] = FaultyNode()
+    simulator = Simulator("PBFT", nodes, f, delivery_threshold)
+    simulator.start()
+
+    print("===========")
+    print(f"Scenario C: {N} nodes are faulty including the proposer...")
+
+    nodes = [PBFTNode(i, N, f, disable_logs) for i in range(N)]
+    nodes[0] = FaultyNode()
+    nodes[8] = FaultyNode()
+    nodes[9] = FaultyNode()
+    simulator = Simulator("PBFT", nodes, f, delivery_threshold)
+    simulator.start()
+
 
 if __name__ == "__main__":
     main()

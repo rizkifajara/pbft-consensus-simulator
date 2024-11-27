@@ -1,64 +1,56 @@
-from src.message import Message
-import random
+from abc import ABC, abstractmethod
+from .message import Message
 
-class Node:
-    def __init__(self, node_id, total_nodes):
-        self.id = node_id
-        self.total_nodes = total_nodes
-        self.consensus = None
-        self.network = None
-        self.message_queue = []
+
+class Node(ABC):
+    @classmethod
+    @abstractmethod
+    def handle_message(self, msg: Message):
+        pass
+
+    @classmethod
+    def get_node_id(self) -> int:
+        pass
+
+    @classmethod
+    def set_network(self, network):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def timer_expired(self):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def is_decided(self) -> bool:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def debug(self, log: str):
+        pass
+
+
+class FaultyNode:
+    """
+    A FaultyNode is a node that can't process incoming messages; it is likely offline.
+    """
+
+    def get_node_id(self) -> int:
+        return -1
+
+    def handle_message(self, msg: Message):
+        return
 
     def set_network(self, network):
-        self.network = network
+        return
 
-    def receive_message(self, message):
-        self.message_queue.append(message)
+    def is_decided(self) -> bool:
+        return False
 
-    def send_message(self, message):
-        self.network.broadcast(self, message)
+    def timer_expired(self):
+        return
 
-    def process_messages(self):
-        self.consensus.check_timeout()
-        while self.message_queue:
-            message = self.message_queue.pop(0)
-            self.consensus.handle_message(message)
-
-class ByzantineNode(Node):
-    def __init__(self, node_id, total_nodes, byzantine_behavior='random'):
-        super().__init__(node_id, total_nodes)
-        self.byzantine_behavior = byzantine_behavior
-
-    def send_message(self, message):
-        if self.byzantine_behavior == 'random':
-            if random.random() < 0.5:
-                message.content = self.corrupt_message(message.content)
-        elif self.byzantine_behavior == 'silent':
-            return
-        elif self.byzantine_behavior == 'liar':
-            message.content = self.corrupt_message(message.content)
-        
-        if self.network:
-            self.network.broadcast(self, message)
-
-    def corrupt_message(self, content):
-        if isinstance(content, str):
-            return content[::-1]
-        elif isinstance(content, int):
-            return content + 1
-        return content
-
-    def process_messages(self):
-        if self.byzantine_behavior == 'silent':
-            return
-        elif self.byzantine_behavior == 'liar':
-            if random.random() < 0.3:
-                if self.consensus.phase == "PREPARE":
-                    self.consensus.handle_prepare(Message(self.id, "PREPARE", "Conflicting Value"))
-                elif self.consensus.phase == "COMMIT":
-                    self.consensus.handle_commit(Message(self.id, "COMMIT", "Conflicting Value"))
-            else:
-                super().process_messages()
-        elif self.byzantine_behavior == 'random':
-            if random.random() < 0.5:
-                super().process_messages()
+    def debug(self, log: str):
+        return
